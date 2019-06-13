@@ -4,16 +4,22 @@ import MyHeader from "./components/MyHeader";
 import Tools from "./components/Tools";
 import AddTask from "./components/AddTask";
 import MyCalendar from "./components/MyCalendar";
-
+import { connect} from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { updateUser } from './actions/user-actions';
 class App extends React.Component {
+  // eslint-disable-next-line no-useless-constructor
+  constructor(props){
+    super();
+  };
   state = {
     add: false,
     title: "",
     description: "",
     day: "",
-    hour: "",
-    minutes: "",
-    priority: "",
+    hour: "00",
+    minutes: "00",
+    priority: "important",
     tasksList: []
   };
   handleClick = params => {
@@ -41,7 +47,7 @@ class App extends React.Component {
       hour: hour+":"+minutes, 
       priority
     }
-    console.log(newTask);
+    // console.log(newTask);
     let tasksList = [...this.state.tasksList];
     tasksList.push(newTask)
     this.setState({tasksList});
@@ -51,9 +57,12 @@ class App extends React.Component {
     this.setState({title:""});
     this.setState({description:""});
     this.setState({day:""});
-    this.setState({hour:""});
-    this.setState({minutes:""})
-    this.setState({priority:""})
+    this.setState({hour:"00"});
+    this.setState({minutes:"00"})
+    this.setState({priority:"important"})
+  }
+  onUpdateUser = () => {
+    this.props.onUpdateUser("SUperOscar");
   }
   render() {
     return (
@@ -61,14 +70,34 @@ class App extends React.Component {
         <MyTitle />
         <MyHeader />
         <Tools addOne={this.handleClick} />
-        {this.state.add ? (
-          <AddTask data={this.state} handleChange={this.handleChange} addDone={this.addDone} addTask={this.addTask} />
-        ) : (
-          <MyCalendar data={this.state.tasksList} />
-        )}
-      </div>
+        <p>{this.props.user.name}</p>
+        
+        <button onClick={this.onUpdateUser}>Update User</button>
+      
+        {this.state.add ? <AddTask addDone={this.addDone} />:<MyCalendar />}
+        <p>A PARTIR DE aqui es shiti</p>
+        </div>
     );
   }
 }
+const mapStateToProps = (state, props) => {
+  return { //ahora puedes usar props..
+    user: state.users,
+    tasks: state.tasks
+  }
+};
+const mapActionsToProps = (dispatch, props)=> {
+  return bindActionCreators({ //ahora puedes usar props
+    onUpdateUser: updateUser
+  }, dispatch)
+};
 
-export default App;
+const mergeProps = (propsFromState, propsFromDispatch, ownProps) =>{
+  return {
+    user: propsFromState.user,
+    task: propsFromState.tasks,
+    onUpdateUser: propsFromDispatch.onUpdateUser
+    };
+}
+
+export default connect(mapStateToProps, mapActionsToProps, mergeProps)(App);

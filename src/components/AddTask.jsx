@@ -1,9 +1,13 @@
 import React, { Component } from "react";
 import { Redirect } from 'react-router';
+import { connect} from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { addTask } from '../actions/task-actions';
+import { addNewTask } from '../actions/newTask-actions';
 class AddTask extends Component {
   state = {};
   constructor(props) {
-    super();
+    super(props);
   }
   selectHour() {
     let hourList = [];
@@ -47,18 +51,49 @@ class AddTask extends Component {
     return priorityList;
   }
   checkForm = ()=>{
-    const { title, description, day, hour, minutes, priority } = this.props.data;
-    if(title==="" || description==="" || day==="" || hour==="" || minutes===""|| priority===""){
-      alert("Please fill all fields")
-    }
-    else {
-      this.props.addTask();
-      this.props.addDone();
+    const { title, description, day, hour, minutes, priority } = this.props.newTask;
+    // if(title==="" || description==="" || day==="" || hour==="" || minutes===""|| priority===""){
+    //   alert("Please fill all fields")
+    // }
+    // else {
+      this.props.onAddTask();
+     
       this.setState({redirect: true});
+    // }
+  };
+  cleanNewTask =() =>{
+    let newTask= {
+      title:"", description:"", day:"", hour:"00", minutes:"00", priority:"normal"
     }
-  }
+    this.props.onAddNewTask(newTask);
+
+  };
+
+  onAddTask = () => {
+    this.props.onAddTask(this.props.newTask);
+    this.props.addDone();
+    this.cleanNewTask();
+    this.setState({redirect: true});
+
+  };
+  onAddNewTask = () =>{
+    let title=document.getElementById('title').value;
+    let day=document.getElementById('day').value;
+    let hour=document.getElementById('hour').value;
+    let minutes=document.getElementById('minutes').value;
+    let description=document.getElementById('description').value;
+    let priority=document.getElementById('priority').value;
+
+    let newTask= {
+      title, description, day, hour:hour+":"+minutes, priority
+    }
+    this.props.onAddNewTask(newTask);
+  };
+
   render() {
-    const { title, description, day, hour, minutes, priority } = this.props.data;
+    // console.log(this.props);
+    
+    const { title, description, day, hour, minutes, priority } = this.props.newTask;
     if (this.state.redirect) {
       return <Redirect push to="/" />;
     }
@@ -70,9 +105,10 @@ class AddTask extends Component {
             <input
               className="col-8"
               name="title"
+              id='title'
               type="text"
               value={title}
-              onChange={this.props.handleChange}
+              onChange={() =>this.onAddNewTask()}
               placeholder="Type The Title"
             />
           </div>
@@ -81,17 +117,18 @@ class AddTask extends Component {
             <input 
               className="col-8"
               type="date"
+              id="day"
               name="day"
               value={day}
-              onChange={this.props.handleChange}
+              onChange={() =>this.onAddNewTask()}
             />
           </div>
           <div className="row">
             <span className="col-3">Hour:</span>
-            <select name="hour" value={hour} onChange={this.props.handleChange} className="col-4">
+            <select name="hour" value={hour} id="hour" onChange={() =>this.onAddNewTask()} className="col-4">
               {this.selectHour()}
             </select>
-            <select name="minutes" value={minutes} onChange={this.props.handleChange} className="col-4">
+            <select name="minutes" value={minutes} id="minutes" onChange={() =>this.onAddNewTask()} className="col-4">
               {this.selectMinutes()}
             </select>
             <span>h</span>
@@ -101,20 +138,21 @@ class AddTask extends Component {
             <input
               className="col-7"
               type="text"
+              id="description"
               value={description}
-              onChange={this.props.handleChange}
+              onChange={() =>this.onAddNewTask()}
               placeholder="what is this task about?"
               name="description"
             />
           </div>
           <div className="row">
             <span className="col-6">How important is this Task?</span>
-            <select name="priority" value={priority} onChange={this.props.handleChange} className="col-6">
+            <select name="priority" value={priority} id="priority" onChange={() =>this.onAddNewTask()} className="col-6">
               {this.selectPriority()}
             </select>
           </div>
           <div className="row flex aling-items-center justify-content-center">
-            <button id="newTask" onClick={this.checkForm}>
+            <button id="newTask" onClick={this.onAddTask}>
               Add My Task!
             </button>
           </div>
@@ -124,4 +162,32 @@ class AddTask extends Component {
   }
 }
 
-export default AddTask;
+
+const mapStateToProps = (state, props) => {
+  return { //ahora puedes usar props..
+     user: state.users,
+     tasks: state.tasks,
+     newTask: state.newTask
+  }
+};
+const mapActionsToProps = (dispatch, props)=> {
+  return bindActionCreators({ //ahora puedes usar props
+    onAddTask: addTask,
+    onAddNewTask: addNewTask
+  }, dispatch)
+};
+
+const mergeProps = (propsFromState, propsFromDispatch, ownProps) =>{
+  return {
+     user: propsFromState.users,
+     tasks: propsFromState.tasks,
+     newTask: propsFromState.newTask,
+     data: ownProps.data,
+     onAddTask: propsFromDispatch.onAddTask,
+     onAddNewTask: propsFromDispatch.onAddNewTask,
+     addDone: ownProps.addDone
+    // taskList: ownProps.taskList
+    };
+}
+
+export default connect(mapStateToProps, mapActionsToProps,mergeProps)(AddTask);
